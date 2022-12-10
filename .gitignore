@@ -1,3 +1,5 @@
 *.json
 *.pickle
 src/__pycache__/*
+src/blacklist.txt
+src/whitelist.txt
