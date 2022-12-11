@@ -1,9 +1,9 @@
-import Gmail_App
+from Gmail_App import Gmail_App
 from datetime import datetime
 import pytz
 import re
 
-def audit_log(self, type, string):
+def audit_log(type, string):
         date_format='%m/%d/%Y %H:%M:%S %Z'
         date = datetime.now(tz=pytz.utc)
         date = date.astimezone(pytz.timezone('US/Pacific'))
