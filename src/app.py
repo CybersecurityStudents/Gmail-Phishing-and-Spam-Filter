@@ -30,32 +30,7 @@ class Gmail_App:
         date = date.astimezone(timezone('US/Pacific'))
         fd = open("logfile.txt", 'a')
         fd.writelines(f'{date.strftime(date_format)} | {type} | {string}\n')
-
-    def handler(self):
-        try:
-            black_lists = open('blacklist.txt', 'r')
-            bcontent = black_lists.read()
-            emails = self.service.users().messages().list(userId=self.email, labelIds='INBOX').execute()
-            blacklist_ids = []
-            for messages in emails['messages']:
-                m = self.service.users().messages().get(userId=self.email, id=messages.get('id'), format='metadata').execute()
-                headers = (m.get("payload")).get("headers")
-                subject = next((header.get("value") for header in headers if header["name"] == "Subject"), None)
-                sender = next((header.get("value") for header in headers if header["name"] == "From"), None)
-                sender_email = re.search('<(.*)>', sender)
-                if sender_email.group(1)==bcontent.strip():
-                    blacklist_ids.append(messages.get('id'))
-                    self.audit_log("Filter", f'{sender} : {subject}')
-                # else:
-                #     implicit deny
-                #     print("placeholder")
-                    
-
-            if blacklist_ids:
-                self.add_quarantine(blacklist_ids)
-
-        except HttpError as error:
-            print(f'An error occurred: {error}')        # SELF NOTE WRITE TO LOGGING
+        fd.close()
             
             
     def add_quarantine(self, message_ids):
@@ -81,8 +56,33 @@ class Gmail_App:
                 return label.get("id")
         except HttpError as error:
             print(f'An error occurred: {error}')        # SELF NOTE WRITE TO LOGGING
-            
+
+def handler(app):
+    try:
+        black_lists = open('blacklist.txt', 'r')
+        bcontent = black_lists.read()
+        emails = app.service.users().messages().list(userId=app.email, labelIds='INBOX').execute()
+        blacklist_ids = []
+        for messages in emails['messages']:
+            m = app.service.users().messages().get(userId=app.email, id=messages.get('id'), format='metadata').execute()
+            headers = (m.get("payload")).get("headers")
+            subject = next((header.get("value") for header in headers if header["name"] == "Subject"), None)
+            sender = next((header.get("value") for header in headers if header["name"] == "From"), None)
+            sender_email = re.search('<(.*)>', sender)
+            if sender_email.group(1)==bcontent.strip():
+                blacklist_ids.append(messages.get('id'))
+                app.audit_log("Filter", f'{sender} : {subject}')
+            # else:
+            #     implicit deny
+            #     print("placeholder")
+                
+
+        if blacklist_ids:
+            app.add_quarantine(blacklist_ids)
+
+    except HttpError as error:
+        print(f'An error occurred: {error}')        # SELF NOTE WRITE TO LOGGING
 
 app = Gmail_App("Test", "Account", "spamfilterbottester@gmail.com", "Quarantine")
-app.handler()
+handler(app)
 
