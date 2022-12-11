@@ -3,6 +3,7 @@ from googleapiclient.errors import HttpError
 from datetime import datetime
 from pytz import timezone
 import pytz
+import re
 
 class Gmail_App:
     def __init__(self, first, last, email, label_name):
@@ -27,41 +28,29 @@ class Gmail_App:
         date_format='%m/%d/%Y %H:%M:%S %Z'
         date = datetime.now(tz=pytz.utc)
         date = date.astimezone(timezone('US/Pacific'))
-        fd = open("audit.txt", 'a')
-        fd.writelines(f'{date.strftime(date_format)} {type}: {string}\n')
+        fd = open("logfile.txt", 'a')
+        fd.writelines(f'{date.strftime(date_format)} | {type} | {string}\n')
 
     def handler(self):
         try:
             black_lists = open('blacklist.txt', 'r')
             bcontent = black_lists.read()
-            white_lists = open('whitelist.txt', 'r')
-            wcontent = white_lists.read()
             emails = self.service.users().messages().list(userId=self.email, labelIds='INBOX').execute()
             blacklist_ids = []
-            
             for messages in emails['messages']:
                 m = self.service.users().messages().get(userId=self.email, id=messages.get('id'), format='metadata').execute()
                 headers = (m.get("payload")).get("headers")
-                for header in headers:
-                    subject = None
-                    if header.get("name")=="Subject":
-                        subject = header.get("value")
-                        print(subject)
-                    if header.get("name")=="From":
-                        start = "<"
-                        end = ">"
-                        s = header.get("value")
-                        sender = s[s.find(start)+len(start):s.rfind(end)]
-                        print(sender)
-                        if sender==bcontent.strip():
-                            blacklist_ids.append(messages.get('id')) 
-                            self.audit_log("Filter", f'<{sender}> {subject}')
-                        elif sender==wcontent.strip():
-                            print("problem this guy is in our whitelist filter")
-                        # else:
-                        #     #implicit deny
-                        #     print("placeholder")
+                subject = next((header.get("value") for header in headers if header["name"] == "Subject"), None)
+                sender = next((header.get("value") for header in headers if header["name"] == "From"), None)
+                sender_email = re.search('<(.*)>', sender)
+                if sender_email.group(1)==bcontent.strip():
+                    blacklist_ids.append(messages.get('id'))
+                    self.audit_log("Filter", f'{sender} : {subject}')
+                # else:
+                #     implicit deny
+                #     print("placeholder")
                     
+
             if blacklist_ids:
                 self.add_quarantine(blacklist_ids)
 
