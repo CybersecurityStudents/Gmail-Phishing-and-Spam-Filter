@@ -18,8 +18,14 @@ class Gmail_App:
     
     def list_inbox(self):
         try:
-            m = self.service.users().messages().list(userId=self.email, labelIds='INBOX').execute()
-            return m
+            return self.service.users().messages().list(userId=self.email, labelIds='INBOX').execute()
+        except HttpError as error:
+            print(f'An error occurred: {error}')        # SELF NOTE WRITE TO LOGGING
+            return False
+    
+    def get_message(self, message_id):
+        try:
+            return self.service.users().messages().get(userId=self.email, id=message_id, format='metadata').execute()
         except HttpError as error:
             print(f'An error occurred: {error}')        # SELF NOTE WRITE TO LOGGING
             return False

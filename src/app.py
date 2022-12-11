@@ -17,7 +17,7 @@ def handler(app):
         emails = app.list_inbox()
         blacklist_ids = []
         for messages in emails['messages']:
-            m = app.service.users().messages().get(userId=app.email, id=messages.get('id'), format='metadata').execute()
+            m = app.get_message(messages.get('id'))
             headers = (m.get("payload")).get("headers")
             subject = next((header.get("value") for header in headers if header["name"] == "Subject"), None)
             sender = next((header.get("value") for header in headers if header["name"] == "From"), None)
