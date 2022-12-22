@@ -20,10 +20,6 @@ class Gmail_App:
         SCOPES = ['https://mail.google.com/']
         return Create_Service(CLIENT_SECRET_FILE, API_NAME, API_VERSION, SCOPES)
 
-    def test(self):
-        labels= self.service.users().labels().list(userId=self.email).execute()
-        print(labels)
-
     def audit_log(self, type, string):
         date_format='%m/%d/%Y %H:%M:%S %Z'
         date = datetime.now(tz=pytz.utc)

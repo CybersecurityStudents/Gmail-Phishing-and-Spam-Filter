@@ -6,7 +6,9 @@ def handler(app):
     try:
         black_lists = open('blacklist.txt', 'r')
         bcontent = black_lists.read()
-        emails = app.service.users().messages().list(userId=app.email, labelIds='INBOX').execute()
+        print("here")
+        service = app.create_Google_service()
+        emails = service.users().messages().list(userId=app.email, labelIds='INBOX').execute()
         blacklist_ids = []
         for messages in emails['messages']:
             m = app.service.users().messages().get(userId=app.email, id=messages.get('id'), format='metadata').execute()
