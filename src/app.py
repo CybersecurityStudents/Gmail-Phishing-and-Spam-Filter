@@ -22,8 +22,6 @@ def handler(app):
                 # else:
                 #     implicit deny
                 #     print("placeholder")
-                
-
         if blacklist_ids:
             app.add_quarantine(blacklist_ids)
 
